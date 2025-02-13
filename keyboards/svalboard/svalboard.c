@@ -145,9 +145,9 @@ void sval_set_active_layer(uint32_t layer, bool save) {
     sval_active_layer = layer;
     struct layer_hsv cols = global_saved_values.layer_colors[layer];
     if (save) {
-        rgblight_sethsv(cols.hue, cols.sat, cols.val);
+        rgblight_sethsv(cols.hue, cols.sat, rgblight_get_val()); //store using current brightness
     } else {
-        rgblight_sethsv_noeeprom(cols.hue, cols.sat, cols.val);
+        rgblight_sethsv_noeeprom(cols.hue, cols.sat, rgblight_get_val()); //reuse currrent brightness
     }
 }
 
@@ -240,7 +240,7 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 
 void sval_on_reconnect(void) {
     // Reset colors, or it won't communicate the right color.
-    rgblight_sethsv_noeeprom(0, 0, 0);
+    rgblight_sethsv_noeeprom(0, 0, rgblight_get_val()); //reuse existing (eeprom) val, so brightness doesn't reset
     sval_set_active_layer(sval_active_layer, true);
 }
 #endif
