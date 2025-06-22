@@ -31,7 +31,6 @@
 #endif
 
 uint8_t  dynamic_keymap_get_layer_count(void);
-void *   dynamic_keymap_key_to_eeprom_address(uint8_t layer, uint8_t row, uint8_t column);
 uint16_t dynamic_keymap_get_keycode(uint8_t layer, uint8_t row, uint8_t column);
 void     dynamic_keymap_set_keycode(uint8_t layer, uint8_t row, uint8_t column, uint16_t keycode);
 #ifdef ENCODER_MAP_ENABLE
