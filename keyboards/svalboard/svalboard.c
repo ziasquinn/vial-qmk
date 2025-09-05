@@ -60,6 +60,7 @@ void read_eeprom_kb(void) {
     if (global_saved_values.version < 5) {
         global_saved_values.version = 5;
         global_saved_values.axis_scroll_lock = false;
+        modified = true;
     }
 
     // As we add versions, just append here.
