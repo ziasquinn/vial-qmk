@@ -43,7 +43,7 @@ void mouse_mode(bool);
 
 #define SCROLL_FREQUENCY_MS 10
 #define SCROLL_DIVISOR 1
-#define SCROLL_MULTIPLIER 5
+#define SCROLL_MULTIPLIER 1
 bool mouse_mode_enabled = false;
 
 axis_scale_t l_x = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
