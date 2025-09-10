@@ -21,13 +21,13 @@ void read_eeprom_kb(void) {
     eeconfig_read_kb_datablock(&global_saved_values, 0, EECONFIG_KB_DATA_SIZE);
     if (global_saved_values.version < 1) {
         global_saved_values.version = 1;
-        global_saved_values.right_dpi_index=2;
-        global_saved_values.left_dpi_index=2;
+        global_saved_values.right_dpi_index=3;
+        global_saved_values.left_dpi_index=3;
         modified = true;
     }
     if (global_saved_values.version < 2) {
         global_saved_values.version = 2;
-        global_saved_values.mh_timer_index = 1;
+        global_saved_values.mh_timer_index = 3;
         modified = true;
     }
     if (global_saved_values.version < 3) {
