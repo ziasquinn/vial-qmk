@@ -20,6 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // This is used by our user's keymaps for conditionals.
 #define SVALBOARD
 
+#define POINTING_DEVICE_HIRES_SCROLL_ENABLE 1
+#define POINTING_DEVICE_HIRES_SCROLL_MULTIPLIER 120
+#define WHEEL_EXTENDED_REPORT 1
+
 #define AXIS_TYPE int16_t
 
 //#define FORTY_FOUR_MM_TB
@@ -44,7 +48,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //OL OU D IL MODE DOUBLE
 //Knuckle Nail Down Pad Up Double
 //#define THUMB_DOWN_ACTIVE_DARK
-
 #define MATRIX_COL_PUSHED_STATES { 0, 0, 1, 0, 0, 0 }
 #ifdef THUMB_DOWN_ACTIVE_DARK
     #define MATRIX_COL_PUSHED_STATES_THUMBS { 0, 0, 1, 0, 0, 0 }
@@ -52,8 +55,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define MATRIX_COL_PUSHED_STATES_THUMBS { 0, 0, 0, 0, 0, 0 }
 #endif
 #define DOUBLEDOWN_COL 5 // need a pullup on COL6
-#define PREWAIT_US 90
-#define POSTWAIT_US 90
+#define PREWAIT_US 45
+#define POSTWAIT_US 45
 
 #define SERIAL_DEBUG
 #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET
@@ -67,13 +70,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define USB_MAX_POWER_CONSUMPTION 500
 #define USB_SUSPEND_WAKEUP_DELAY 500
-#define SELECT_SOFT_SERIAL_RATE {0}
+#define SERIAL_USART_SPEED 1000000
 
 #define MOUSE_EXTENDED_REPORT
 #define SPLIT_POINTING_ENABLE
 #define POINTING_DEVICE_COMBINED
 #define POINTING_DEVICE_AUTO_MOUSE_MH_ENABLE
-#define POINTING_DEVICE_TASK_THROTTLE_MS 5
+#define POINTING_DEVICE_TASK_THROTTLE_MS 1
+
 
 // Avoid slave-slave deadlock due to missing USB_VBUS_PIN.
 //
@@ -81,6 +85,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // hub, KVM, or a machine that boots slowly (ECC RAM), the keyboard no longer
 // needs to be reset to come to life.
 #define SPLIT_WATCHDOG_ENABLE
+
+// And yet, with boards with vbus pin capability, turning this off does HELP. Maybe only in combination with the watchdog?
+// https://github.com/qmk/qmk_firmware/issues/18511#issuecomment-1264604610
+// https://github.com/qmk/qmk_firmware/issues/8990#issuecomment-851055637
+#undef SPLIT_USB_DETECT
 
 // WS2812-fu here:
 //  pretty lights
@@ -100,4 +109,3 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SPLIT_TRANSACTION_IDS_KB KEYBOARD_SYNC_A
 
 #define PERMISSIVE_HOLD
-#define ACHORDION_STREAK

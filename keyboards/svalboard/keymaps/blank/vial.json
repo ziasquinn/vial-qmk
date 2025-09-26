@@ -52,9 +52,9 @@
         "name": "SV_CAPS_WORD"
       },
       {
-        "shortName": "Toggle\nACH",
-        "title": "Toggle Achordion",
-        "name": "SV_TOGGLE_ACHORDION"
+        "shortName": "Axis\nScroll\nLock",
+        "title": "Toggle Axis Scroll Lock.",
+        "name": "SV_AXIS_SCROLL_LOCK"
       },
       {
         "shortName": "MO 23\n(45=67)",
@@ -95,15 +95,20 @@
 	"shortName": "Output\nStatus",
 	"title": "Output the current internal state of the keyboard.",
 	"name": "SV_OUTPUT_STATUS"
-      }    
+      },
+      {
+        "shortName": "AutoMouse\nToggle",
+        "title": "Toggle Auto Mouse layer activation.",
+        "name": "SV_TOGGLE_AUTOMOUSE"
+      }
     ],
     "layouts": {
     "labels": [
       "Normal",
       [
-        "SS",
-        "No SS",
-        "SS"
+        "2S",
+        "No 2S",
+        "2S"
       ]
     ],
       "keymap": [

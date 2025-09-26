@@ -109,7 +109,7 @@ const uint16_t PROGMEM keymaps[DYNAMIC_KEYMAP_LAYER_COUNT][MATRIX_ROWS][MATRIX_C
         /* L1 */            SV_OUTPUT_STATUS,       KC_TRNS,             KC_TRNS,         KC_TRNS,            KC_TRNS,            -1,
         /* L2 */            SV_RIGHT_SCROLL_TOGGLE, SV_RIGHT_DPI_INC,    KC_TRNS,         SV_RIGHT_DPI_DEC,   KC_TRNS,            -1,
         /* L3 */            SV_LEFT_SCROLL_TOGGLE,  SV_LEFT_DPI_INC,     KC_TRNS,         SV_LEFT_DPI_DEC,    KC_TRNS,            -1,
-        /* L4 */            SV_MH_CHANGE_TIMEOUTS,  SV_TOGGLE_ACHORDION, KC_TRNS,         SV_TOGGLE_AUTOMOUSE,KC_TRNS,            -1,
+        /* L4 */            SV_MH_CHANGE_TIMEOUTS,  SV_AXIS_SCROLL_LOCK, KC_TRNS,         KC_NO,              KC_TRNS,            -1,
 
         /*                  Down                Pad                 Up                  Nail                Knuckle             Double Down         */
         /* RT */            KC_TRNS,            KC_TRNS,            KC_TRNS,            KC_TRNS,            KC_TRNS,            KC_TRNS,
@@ -133,16 +133,6 @@ const uint16_t PROGMEM keymaps[DYNAMIC_KEYMAP_LAYER_COUNT][MATRIX_ROWS][MATRIX_C
 
 };
 #endif
-
-bool achordion_chord(uint16_t tap_hold_keycode, keyrecord_t* tap_hold_record,
-                     uint16_t other_keycode, keyrecord_t* other_record) {
-    if (tap_hold_record->event.key.row == 0 || tap_hold_record->event.key.row == 5 ||
-        other_record->event.key.row    == 0 || other_record->event.key.row    == 5) {
-        return true;
-    }
-
-    return achordion_opposite_hands(tap_hold_record, other_record);
-}
 
 void keyboard_post_init_user(void) {
   // Customise these values if you need to debug the matrix

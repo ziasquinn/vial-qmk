@@ -2,9 +2,10 @@
 #include "eeconfig.h"
 #include "version.h"
 #include "split_common/transactions.h"
+#include QMK_KEYBOARD_H
 
 saved_values_t global_saved_values;
-const int16_t mh_timer_choices[4] = { 300, 500, 800, -1 }; // -1 is infinite.
+const int16_t mh_timer_choices[6] = { 200, 300, 400, 500, 800, -1 }; // -1 is infinite.
 
 uint8_t sval_active_layer = 0;
 #ifdef VIAL_ENABLE
@@ -12,43 +13,43 @@ bool fresh_install = false;
 #endif
 
 void write_eeprom_kb(void) {
-    eeconfig_update_kb_datablock(&global_saved_values);
+    eeconfig_update_kb_datablock(&global_saved_values, 0, EECONFIG_KB_DATA_SIZE);
 }
 
 void read_eeprom_kb(void) {
     bool modified = false;
-    eeconfig_read_kb_datablock(&global_saved_values);
+    eeconfig_read_kb_datablock(&global_saved_values, 0, EECONFIG_KB_DATA_SIZE);
     if (global_saved_values.version < 1) {
         global_saved_values.version = 1;
-        global_saved_values.right_dpi_index=2;
-        global_saved_values.left_dpi_index=2;
+        global_saved_values.right_dpi_index=3;
+        global_saved_values.left_dpi_index=3;
         modified = true;
     }
     if (global_saved_values.version < 2) {
         global_saved_values.version = 2;
-        global_saved_values.mh_timer_index = 1;
+        global_saved_values.mh_timer_index = 3;
         modified = true;
     }
     if (global_saved_values.version < 3) {
         global_saved_values.version = 3;
 #define HSV(c) (struct layer_hsv) { (c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF}
         // Colors from chatgpt.
-        global_saved_values.layer_colors[0] = HSV(0x55FFFF); // Green
+        global_saved_values.layer_colors[0] = HSV(0x0BB0FF); // Coral
         global_saved_values.layer_colors[1] = HSV(0x15FFFF); // Orange
         global_saved_values.layer_colors[2] = HSV(0x95FFFF); // Azure
         global_saved_values.layer_colors[3] = HSV(0x0BB0FF); // Coral
         global_saved_values.layer_colors[4] = HSV(0x2BFFFF); // Yellow
         global_saved_values.layer_colors[5] = HSV(0x80FF80); // Teal
         global_saved_values.layer_colors[6] = HSV(0x00FFFF); // Red
-        global_saved_values.layer_colors[7] = HSV(0x00FFFF); // Red
+        global_saved_values.layer_colors[7] = HSV(0xD5FFFF); // Magenta 
         global_saved_values.layer_colors[8] = HSV(0xEAFFFF); // Pink
         global_saved_values.layer_colors[9] = HSV(0xBFFF80); // Purple
-        global_saved_values.layer_colors[10] = HSV(0x0BB0FF); // Coral
+        global_saved_values.layer_colors[10] = HSV(0x55FFFF); // Green 
         global_saved_values.layer_colors[11] = HSV(0x6AFFFF); // Spring Green
         global_saved_values.layer_colors[12] = HSV(0x80FF80); // Teal
         global_saved_values.layer_colors[13] = HSV(0x80FFFF); // Turquoise
         global_saved_values.layer_colors[14] = HSV(0x2BFFFF); // Yellow
-        global_saved_values.layer_colors[15] = HSV(0xD5FFFF); // Magenta
+        global_saved_values.layer_colors[15] = HSV(0x00FFFF); // Red
         modified = true;
     }
     if (global_saved_values.version < 4) {
@@ -56,6 +57,12 @@ void read_eeprom_kb(void) {
         global_saved_values.auto_mouse = true;
         modified = true;
     }
+    if (global_saved_values.version < 5) {
+        global_saved_values.version = 5;
+        global_saved_values.axis_scroll_lock = false;
+        modified = true;
+    }
+
     // As we add versions, just append here.
     if (modified) {
         write_eeprom_kb();
@@ -74,7 +81,7 @@ const char *yes_or_no(int flag) {
     }
 }
 
-const uint16_t dpi_choices[] = { 200, 400, 800, 1200, 1600, 2400 }; // If we need more, add them.
+const uint16_t dpi_choices[] = { 200, 400, 600, 800, 1200, 1600, 2400 }; // If we need more, add them.
 #define DPI_CHOICES_LENGTH (sizeof(dpi_choices)/sizeof(dpi_choices[0]))
 
 void output_keyboard_info(void) {
@@ -86,8 +93,8 @@ void output_keyboard_info(void) {
 	    yes_or_no(global_saved_values.left_scroll), dpi_choices[global_saved_values.left_dpi_index],
 	    yes_or_no(global_saved_values.right_scroll), dpi_choices[global_saved_values.right_dpi_index]);
     send_string(output_buffer);
-    sprintf(output_buffer, "Achordion: %s, MH Keys: %s, MH Keys Timer: %d\n",
-	    yes_or_no(!global_saved_values.disable_achordion),
+    sprintf(output_buffer, "Axis Scroll Lock: %s, MH Keys: %s, MH Keys Timer: %d\n",
+	    yes_or_no(global_saved_values.axis_scroll_lock),
         yes_or_no(global_saved_values.auto_mouse),
 	    mh_timer_choices[global_saved_values.mh_timer_index]);
     send_string(output_buffer);
@@ -265,3 +272,17 @@ void bootmagic_lite(void) {
 __attribute__((weak)) void recalibrate_pointer(void) {
 }
 
+
+const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM =
+    LAYOUT(
+            'R', 'R', 'R', 'R', 'R', 'R',
+            'R', 'R', 'R', 'R', 'R', 'R',
+            'R', 'R', 'R', 'R', 'R', 'R',
+            'R', 'R', 'R', 'R', 'R', 'R',
+            'L', 'L', 'L', 'L', 'L', 'L',
+            'L', 'L', 'L', 'L', 'L', 'L',
+            'L', 'L', 'L', 'L', 'L', 'L',
+            'L', 'L', 'L', 'L', 'L', 'L',
+            '*', '*', '*', '*', '*', '*',
+            '*', '*', '*', '*', '*', '*'
+          );

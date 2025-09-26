@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quantum.h"
 
-extern const int16_t mh_timer_choices[4];
+extern const int16_t mh_timer_choices[6];
 extern bool fresh_install;
 
 struct layer_hsv {
@@ -31,7 +31,7 @@ struct saved_values {
     uint8_t version;  // Currently at 1,  We assume all new data will be zeroed.
     bool left_scroll :1;
     bool right_scroll :1;
-    bool disable_achordion: 1;
+    bool axis_scroll_lock: 1;
     bool auto_mouse: 1;
     unsigned int unused0 :4;
     uint8_t left_dpi_index;
