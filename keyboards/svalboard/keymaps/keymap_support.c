@@ -90,7 +90,7 @@ report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, r
 
     if ((global_saved_values.left_scroll != scroll_hold) != scroll_toggle) {
         reportMouse1.h = add_to_axis(&l_x, reportMouse1.x);
-        reportMouse1.v = add_to_axis(&l_y, -reportMouse1.y);
+        reportMouse1.v = add_to_axis(&l_y, reportMouse1.y);
 
         reportMouse1.x = 0;
         reportMouse1.y = 0;
