@@ -1,4 +1,4 @@
-name: Build QMK Firmware
+name: Build QMK Firmware by hand
 
 on:
   workflow_dispatch:
