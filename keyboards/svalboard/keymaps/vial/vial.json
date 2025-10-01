@@ -100,6 +100,36 @@
         "shortName": "AutoMouse\nToggle",
         "title": "Toggle Auto Mouse layer activation.",
         "name": "SV_TOGGLE_AUTOMOUSE"
+      },
+      {
+        "shortName": "Axis\nNotch\n+",
+        "title": "Increase axis scroll notch threshold.",
+        "name": "SV_AXIS_SCROLL_NOTCH_INC"
+      },
+      {
+        "shortName": "Axis\nNotch\n-",
+        "title": "Decrease axis scroll notch threshold.",
+        "name": "SV_AXIS_SCROLL_NOTCH_DEC"
+      },
+      {
+        "shortName": "Axis\nTimer\n+",
+        "title": "Increase axis scroll slow movement timer.",
+        "name": "SV_AXIS_SCROLL_TIMER_INC"
+      },
+      {
+        "shortName": "Axis\nTimer\n-",
+        "title": "Decrease axis scroll slow movement timer.",
+        "name": "SV_AXIS_SCROLL_TIMER_DEC"
+      },
+      {
+        "shortName": "Axis\nInact\n-",
+        "title": "Decrease axis scroll inactivity timer.",
+        "name": "SV_AXIS_SCROLL_INACTIVE_DEC"
+      },
+      {
+        "shortName": "Axis\nInact\n+",
+        "title": "Increase axis scroll inactivity timer.",
+        "name": "SV_AXIS_SCROLL_INACTIVE_INC"
       }
     ],
     "layouts": {

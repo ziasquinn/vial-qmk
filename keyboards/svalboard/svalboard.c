@@ -62,7 +62,15 @@ void read_eeprom_kb(void) {
         global_saved_values.axis_scroll_lock = false;
         modified = true;
     }
-
+    if (global_saved_values.version < 6) {
+        global_saved_values.version = 6;
+	
+        global_saved_values.axis_scroll_notch_threshold = 20;
+        global_saved_values.axis_scroll_slow_timer_ms = 250;
+        global_saved_values.axis_scroll_inactivity_reset_ms = 300;
+        modified = true;
+    }
+    
     // As we add versions, just append here.
     if (modified) {
         write_eeprom_kb();
@@ -98,6 +106,13 @@ void output_keyboard_info(void) {
         yes_or_no(global_saved_values.auto_mouse),
 	    mh_timer_choices[global_saved_values.mh_timer_index]);
     send_string(output_buffer);
+    if (global_saved_values.axis_scroll_lock) {
+        sprintf(output_buffer, "Axis Scroll Notch: %d/100in, Slow Timer: %dms, Reset Timer: %dms\n",
+            global_saved_values.axis_scroll_notch_threshold,
+            global_saved_values.axis_scroll_slow_timer_ms,
+            global_saved_values.axis_scroll_inactivity_reset_ms);
+        send_string(output_buffer);
+    }
 }
 
 void increase_left_dpi(void) {
@@ -131,6 +146,15 @@ void decrease_right_dpi(void) {
         write_eeprom_kb();
     }
 }
+
+int16_t get_left_dpi() {
+    return dpi_choices[global_saved_values.left_dpi_index];
+}
+
+int16_t get_right_dpi() {
+    return dpi_choices[global_saved_values.right_dpi_index];
+}
+
 // TODO: Still need to add code to save values.
 void set_left_dpi(uint8_t index) {
     uprintf("LDPI: %d %d\n", index, dpi_choices[index]);

@@ -41,6 +41,13 @@ enum my_keycodes {
     SV_SCROLL_TOGGLE,
     SV_OUTPUT_STATUS,
     SV_TOGGLE_AUTOMOUSE,
+    // New axis scroll configuration keycodes
+    SV_AXIS_SCROLL_NOTCH_INC,
+    SV_AXIS_SCROLL_NOTCH_DEC,
+    SV_AXIS_SCROLL_TIMER_INC,
+    SV_AXIS_SCROLL_TIMER_DEC,
+    SV_AXIS_SCROLL_INACTIVE_DEC,
+    SV_AXIS_SCROLL_INACTIVE_INC,
     // New keycodes should go here, to avoid breaking existing keymaps - order must match vial.json
     KC_NORMAL_HOLD = SAFE_RANGE,
     KC_FUNC_HOLD,
