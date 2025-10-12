@@ -100,6 +100,11 @@
         "shortName": "AutoMouse\nToggle",
         "title": "Toggle Auto Mouse layer activation.",
         "name": "SV_TOGGLE_AUTOMOUSE"
+      },
+      {
+	 "shortName": "Turbo\nMode",
+	 "title": "Change the turbo mode of the keyboard.",
+	 "name": "SV_TURBO_MODE"
       }
     ],
     "layouts": {

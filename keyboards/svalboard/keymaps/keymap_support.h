@@ -41,6 +41,7 @@ enum my_keycodes {
     SV_SCROLL_TOGGLE,
     SV_OUTPUT_STATUS,
     SV_TOGGLE_AUTOMOUSE,
+    SV_TURBO_MODE,
     KC_NORMAL_HOLD = SAFE_RANGE,
     KC_FUNC_HOLD,
     SV_SAFE_RANGE, // Keycodes over this are safe on Svalboard.

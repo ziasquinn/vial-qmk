@@ -51,6 +51,29 @@ axis_scale_t l_y = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 axis_scale_t r_x = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 axis_scale_t r_y = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 
+#define MAC_DIVISOR 120
+
+bool process_detected_host_os_kb(os_variant_t os) {
+    if (!process_detected_host_os_user(os)) {
+        return false;
+    }
+
+    switch (os) {
+        case OS_MACOS:
+        case OS_IOS:
+            set_div_axis(&l_x, MAC_DIVISOR);
+            set_div_axis(&l_y, MAC_DIVISOR);
+            set_div_axis(&r_x, MAC_DIVISOR);
+            set_div_axis(&r_y, MAC_DIVISOR);
+            break;
+        default:
+            set_div_axis(&l_x, SCROLL_DIVISOR);
+            set_div_axis(&l_y, SCROLL_DIVISOR);
+            set_div_axis(&r_x, SCROLL_DIVISOR);
+            set_div_axis(&r_y, SCROLL_DIVISOR);
+    }
+    return true;
+}
 
 axis_scale_t sniper_x = {1, 1, 0};
 axis_scale_t sniper_y = {1, 1, 0};
@@ -438,6 +461,9 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
                 global_saved_values.auto_mouse = !global_saved_values.auto_mouse;
                 write_eeprom_kb();
                 return false;
+	    case SV_TURBO_MODE:
+	        change_turbo_mode();
+	        return false;
         }
     } else { // key released
         switch (keycode) {

@@ -63,7 +63,11 @@ void read_eeprom_kb(void) {
         global_saved_values.axis_scroll_lock = true;
         modified = true;
     }
-    
+    if (global_saved_values.version < 6) {
+        global_saved_values.version = 6;
+        global_saved_values.turbo_mode = 0;
+    }
+
     // As we add versions, just append here.
     if (modified) {
         write_eeprom_kb();
@@ -94,11 +98,24 @@ void output_keyboard_info(void) {
 	    yes_or_no(global_saved_values.left_scroll), dpi_choices[global_saved_values.left_dpi_index],
 	    yes_or_no(global_saved_values.right_scroll), dpi_choices[global_saved_values.right_dpi_index]);
     send_string(output_buffer);
-    sprintf(output_buffer, "Axis Scroll Lock: %s, MH Keys: %s, MH Keys Timer: %d\n",
+    sprintf(output_buffer, "Axis Scroll Lock: %s, MH Keys: %s, MH Keys Timer: %d, Turbo Mode: %d\n",
 	    yes_or_no(global_saved_values.axis_scroll_lock),
-        yes_or_no(global_saved_values.auto_mouse),
-	    mh_timer_choices[global_saved_values.mh_timer_index]);
+	    yes_or_no(global_saved_values.auto_mouse),
+	    mh_timer_choices[global_saved_values.mh_timer_index],
+	    global_saved_values.turbo_mode);
     send_string(output_buffer);
+}
+
+const uint16_t sval_postwait_us[] = {90, 60, 45, 30, 25, 20, 15};
+const uint16_t sval_prewait_us[] = {90, 60, 45, 30, 25, 20, 15};
+#define TURBO_CHOICES_LENGTH (sizeof(sval_postwait_us)/sizeof(sval_postwait_us[0]))
+void change_turbo_mode(void) {
+    if (global_saved_values.turbo_mode + 1 < TURBO_CHOICES_LENGTH) {
+        global_saved_values.turbo_mode++;
+    } else {
+        global_saved_values.turbo_mode = 0;
+    }
+    write_eeprom_kb();
 }
 
 void increase_left_dpi(void) {
@@ -171,7 +188,7 @@ void sval_set_active_layer(uint32_t layer, bool save) {
 // VIAL SPECIFIC FOR SVALBOARD + KEYBARD
 #ifdef VIAL_ENABLE
 void kb_sync_listener(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, void* out_data) {
-    // Just a ping-pong, no need to do anything.
+  global_saved_values.turbo_mode = ((const presence_rpc_t *)in_data)->turbo_mode;
 }
 
 // Called from via_init, we can check here if we're a fresh
@@ -196,7 +213,7 @@ void housekeeping_task_kb(void) {
     if (is_keyboard_master()) {
         static uint32_t last_ping = 0;
         if (timer_elapsed(last_ping) > 500) {
-            presence_rpc_t rpcout = {0};
+            presence_rpc_t rpcout = {global_saved_values.turbo_mode};
             presence_rpc_t rpcin = {0};
             if (transaction_rpc_exec(KEYBOARD_SYNC_A, sizeof(presence_rpc_t), &rpcout, sizeof(presence_rpc_t), &rpcin)) {
                 if (!is_connected) {

@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EE_HANDS
 //#define DEBUG_MATRIX_SCAN_RATE
 // Data size is 5 + (16 * 3), to include layer colors in HSV struct.
-#define EECONFIG_KB_DATA_SIZE 53
+#define EECONFIG_KB_DATA_SIZE 54
 
 #define FLASH_LEN (16 * 1024 * 1024)
 #define WEAR_LEVELING_BACKING_SIZE (128 * 1024)
@@ -54,8 +54,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define MATRIX_COL_PUSHED_STATES_THUMBS { 0, 0, 0, 0, 0, 0 }
 #endif
 #define DOUBLEDOWN_COL 5 // need a pullup on COL6
-#define PREWAIT_US 45
-#define POSTWAIT_US 45
 
 #define SERIAL_DEBUG
 #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET
@@ -105,3 +103,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define PERMISSIVE_HOLD
 
 #define MOUSEKEY_WHEEL_DELTA 120
+
+#define OS_DETECTION_KEYBOARD_RESET
