@@ -38,7 +38,7 @@ struct __attribute__((__packed__)) saved_values {
     uint8_t right_dpi_index;
     uint8_t mh_timer_index;
     struct layer_hsv layer_colors[DYNAMIC_KEYMAP_LAYER_COUNT];
-    uint8_t turbo_mode;
+    uint8_t turbo_scan;
 };
 
 #define SVAL_PROTO_VERSION 3
@@ -55,7 +55,7 @@ enum sval_command_ids {
 
 // Just for ping pong, do we want anything else for it?
 typedef struct _presence_rpc_t {
-    uint8_t turbo_mode;
+    uint8_t turbo_scan;
 } presence_rpc_t;
 
 typedef struct saved_values saved_values_t;
@@ -69,7 +69,7 @@ void decrease_right_dpi(void);
 void set_left_dpi(uint8_t index);
 void set_right_dpi(uint8_t index);
 void write_eeprom_kb(void);
-void change_turbo_mode(void);
+void change_turbo_scan(void);
 void recalibrate_pointer(void);
 void sval_set_active_layer(uint32_t layer, bool save);
 void sval_on_reconnect(void);

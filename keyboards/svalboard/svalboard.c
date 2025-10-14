@@ -65,7 +65,7 @@ void read_eeprom_kb(void) {
     }
     if (global_saved_values.version < 6) {
         global_saved_values.version = 6;
-        global_saved_values.turbo_mode = 0;
+        global_saved_values.turbo_scan = 0;
     }
 
     // As we add versions, just append here.
@@ -102,18 +102,18 @@ void output_keyboard_info(void) {
 	    yes_or_no(global_saved_values.axis_scroll_lock),
 	    yes_or_no(global_saved_values.auto_mouse),
 	    mh_timer_choices[global_saved_values.mh_timer_index],
-	    global_saved_values.turbo_mode);
+	    global_saved_values.turbo_scan);
     send_string(output_buffer);
 }
 
 const uint16_t sval_postwait_us[] = {90, 60, 45, 30, 25, 20, 15};
 const uint16_t sval_prewait_us[] = {90, 60, 45, 30, 25, 20, 15};
 #define TURBO_CHOICES_LENGTH (sizeof(sval_postwait_us)/sizeof(sval_postwait_us[0]))
-void change_turbo_mode(void) {
-    if (global_saved_values.turbo_mode + 1 < TURBO_CHOICES_LENGTH) {
-        global_saved_values.turbo_mode++;
+void change_turbo_scan(void) {
+    if (global_saved_values.turbo_scan + 1 < TURBO_CHOICES_LENGTH) {
+        global_saved_values.turbo_scan++;
     } else {
-        global_saved_values.turbo_mode = 0;
+        global_saved_values.turbo_scan = 0;
     }
     write_eeprom_kb();
 }
@@ -188,7 +188,7 @@ void sval_set_active_layer(uint32_t layer, bool save) {
 // VIAL SPECIFIC FOR SVALBOARD + KEYBARD
 #ifdef VIAL_ENABLE
 void kb_sync_listener(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, void* out_data) {
-  global_saved_values.turbo_mode = ((const presence_rpc_t *)in_data)->turbo_mode;
+  global_saved_values.turbo_scan = ((const presence_rpc_t *)in_data)->turbo_scan;
 }
 
 // Called from via_init, we can check here if we're a fresh
@@ -213,7 +213,7 @@ void housekeeping_task_kb(void) {
     if (is_keyboard_master()) {
         static uint32_t last_ping = 0;
         if (timer_elapsed(last_ping) > 500) {
-            presence_rpc_t rpcout = {global_saved_values.turbo_mode};
+            presence_rpc_t rpcout = {global_saved_values.turbo_scan};
             presence_rpc_t rpcin = {0};
             if (transaction_rpc_exec(KEYBOARD_SYNC_A, sizeof(presence_rpc_t), &rpcout, sizeof(presence_rpc_t), &rpcin)) {
                 if (!is_connected) {

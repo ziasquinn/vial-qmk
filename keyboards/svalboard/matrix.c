@@ -109,7 +109,7 @@ void matrix_read_cols_on_row(matrix_row_t current_matrix[], uint8_t current_row)
     select_row(current_row);
     // if thumb row use col_pushed_states_thumbs
 
-    wait_us(sval_prewait_us[global_saved_values.turbo_mode]);
+    wait_us(sval_prewait_us[global_saved_values.turbo_scan]);
 
     // For each col...
     for (uint8_t col_index = 0; col_index < MATRIX_COLS; col_index++) {
@@ -136,7 +136,7 @@ void matrix_read_cols_on_row(matrix_row_t current_matrix[], uint8_t current_row)
 
     // Unselect row
     unselect_row(current_row);
-    wait_us(sval_postwait_us[global_saved_values.turbo_mode]);
+    wait_us(sval_postwait_us[global_saved_values.turbo_scan]);
 
     // Update the matrix
     current_matrix[current_row] = current_row_value;

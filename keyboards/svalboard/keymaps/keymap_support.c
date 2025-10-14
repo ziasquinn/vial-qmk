@@ -52,7 +52,7 @@ axis_scale_t r_x = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 axis_scale_t r_y = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 
 #define MAC_DIVISOR 120
-
+bool is_mac = false;
 bool process_detected_host_os_kb(os_variant_t os) {
     if (!process_detected_host_os_user(os)) {
         return false;
@@ -65,12 +65,15 @@ bool process_detected_host_os_kb(os_variant_t os) {
             set_div_axis(&l_y, MAC_DIVISOR);
             set_div_axis(&r_x, MAC_DIVISOR);
             set_div_axis(&r_y, MAC_DIVISOR);
+	    is_mac = true;
             break;
         default:
             set_div_axis(&l_x, SCROLL_DIVISOR);
             set_div_axis(&l_y, SCROLL_DIVISOR);
             set_div_axis(&r_x, SCROLL_DIVISOR);
             set_div_axis(&r_y, SCROLL_DIVISOR);
+	    is_mac = false;
+	    break;
     }
     return true;
 }
@@ -248,7 +251,7 @@ report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, r
     }
 
     if (scroll_timer_running && timer_elapsed(scroll_timer) > SCROLL_FREQUENCY_MS) {
-        if (global_saved_values.axis_scroll_lock) {
+        if (global_saved_values.axis_scroll_lock && !is_mac) {
 	    update_axis_scroll_mode(m_scroll_accumulator_h, m_scroll_accumulator_v);
             if (axis_scroll_mode == SV_AXIS_LOCKED_V) {
                 reportMouse1.v = scroll_accumulator_v;
@@ -461,8 +464,8 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
                 global_saved_values.auto_mouse = !global_saved_values.auto_mouse;
                 write_eeprom_kb();
                 return false;
-	    case SV_TURBO_MODE:
-	        change_turbo_mode();
+	    case SV_TURBO_SCAN:
+	        change_turbo_scan();
 	        return false;
         }
     } else { // key released

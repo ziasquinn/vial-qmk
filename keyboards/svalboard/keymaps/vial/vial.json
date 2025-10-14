@@ -102,9 +102,9 @@
         "name": "SV_TOGGLE_AUTOMOUSE"
       },
       {
-	 "shortName": "Turbo\nMode",
-	 "title": "Change the turbo mode of the keyboard.",
-	 "name": "SV_TURBO_MODE"
+	 "shortName": "Turbo\nScan",
+	 "title": "Change the scan mode of the keyboard.",
+	 "name": "SV_TURBO_SCAN"
       }
     ],
     "layouts": {
