@@ -88,6 +88,7 @@ const char *yes_or_no(int flag) {
 
 const uint16_t dpi_choices[] = { 200, 400, 600, 800, 1200, 1600, 2400, 3200, 4800, 6400, 12000 }; // If we need more, add them.
 #define DPI_CHOICES_LENGTH (sizeof(dpi_choices)/sizeof(dpi_choices[0]))
+extern bool is_mac;
 
 void output_keyboard_info(void) {
     char output_buffer[256];
@@ -98,8 +99,9 @@ void output_keyboard_info(void) {
 	    yes_or_no(global_saved_values.left_scroll), dpi_choices[global_saved_values.left_dpi_index],
 	    yes_or_no(global_saved_values.right_scroll), dpi_choices[global_saved_values.right_dpi_index]);
     send_string(output_buffer);
-    sprintf(output_buffer, "Axis Scroll Lock: %s, MH Keys: %s, MH Keys Timer: %d, Turbo Mode: %d\n",
+    sprintf(output_buffer, "Axis Scroll Lock: %s (is Mac: %d), MH Keys: %s, MH Keys Timer: %d, Turbo Mode: %d\n",
 	    yes_or_no(global_saved_values.axis_scroll_lock),
+	    is_mac,
 	    yes_or_no(global_saved_values.auto_mouse),
 	    mh_timer_choices[global_saved_values.mh_timer_index],
 	    global_saved_values.turbo_scan);
