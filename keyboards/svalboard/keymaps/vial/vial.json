@@ -82,14 +82,14 @@
         "name": "SV_SNIPER_5"
       },
       {
-        "shortName": "Scroll\nLeft\nHold",
-        "title": "Hold to make the left pointing device scroll",
-        "name": "SV_LEFT_SCROLL_HOLD"
+	"shortName": "Scroll\nToggle\nHold",
+	"title": "Hold to toggle the scrolling mode of both pointers.",
+	"name": "SV_SCROLL_HOLD"
       },
       {
-        "shortName": "Scroll\nRight\nHold",
-        "title": "Hold to make the right pointing device scroll",
-        "name": "SV_RIGHT_SCROLL_HOLD"
+	"shortName": "Scroll\nToggle",
+	"title": "Press to toggle the scrolling mode of both pointers.",
+	"name": "SV_SCROLL_TOGGLE"
       },
       {
 	"shortName": "Output\nStatus",
@@ -100,6 +100,11 @@
         "shortName": "AutoMouse\nToggle",
         "title": "Toggle Auto Mouse layer activation.",
         "name": "SV_TOGGLE_AUTOMOUSE"
+      },
+      {
+	 "shortName": "Turbo\nScan",
+	 "title": "Change the scan mode of the keyboard.",
+	 "name": "SV_TURBO_SCAN"
       }
     ],
     "layouts": {

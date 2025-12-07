@@ -59,8 +59,12 @@ void read_eeprom_kb(void) {
     }
     if (global_saved_values.version < 5) {
         global_saved_values.version = 5;
-        global_saved_values.axis_scroll_lock = false;
+        global_saved_values.axis_scroll_lock = true;
         modified = true;
+    }
+    if (global_saved_values.version < 6) {
+        global_saved_values.version = 6;
+        global_saved_values.turbo_scan = 0;
     }
 
     // As we add versions, just append here.
@@ -81,8 +85,9 @@ const char *yes_or_no(int flag) {
     }
 }
 
-const uint16_t dpi_choices[] = { 200, 400, 600, 800, 1200, 1600, 2400 }; // If we need more, add them.
+const uint16_t dpi_choices[] = { 200, 400, 600, 800, 1200, 1600, 2400, 3200, 4800, 6400, 12000 }; // If we need more, add them.
 #define DPI_CHOICES_LENGTH (sizeof(dpi_choices)/sizeof(dpi_choices[0]))
+extern bool is_mac;
 
 void output_keyboard_info(void) {
     char output_buffer[256];
@@ -93,11 +98,25 @@ void output_keyboard_info(void) {
 	    yes_or_no(global_saved_values.left_scroll), dpi_choices[global_saved_values.left_dpi_index],
 	    yes_or_no(global_saved_values.right_scroll), dpi_choices[global_saved_values.right_dpi_index]);
     send_string(output_buffer);
-    sprintf(output_buffer, "Axis Scroll Lock: %s, MH Keys: %s, MH Keys Timer: %d\n",
+    sprintf(output_buffer, "Axis Scroll Lock: %s (is Mac: %d), Mouse Layer: %s, Mouse Layer Timeout: %d, Turbo Scan: %d\n",
 	    yes_or_no(global_saved_values.axis_scroll_lock),
-        yes_or_no(global_saved_values.auto_mouse),
-	    mh_timer_choices[global_saved_values.mh_timer_index]);
+	    is_mac,
+	    yes_or_no(global_saved_values.auto_mouse),
+	    mh_timer_choices[global_saved_values.mh_timer_index],
+	    global_saved_values.turbo_scan);
     send_string(output_buffer);
+}
+
+const uint16_t sval_postwait_us[] = {90, 60, 45, 30, 25, 20, 15};
+const uint16_t sval_prewait_us[] = {90, 60, 45, 30, 25, 20, 15};
+#define TURBO_CHOICES_LENGTH (sizeof(sval_postwait_us)/sizeof(sval_postwait_us[0]))
+void change_turbo_scan(void) {
+    if (global_saved_values.turbo_scan + 1 < TURBO_CHOICES_LENGTH) {
+        global_saved_values.turbo_scan++;
+    } else {
+        global_saved_values.turbo_scan = 0;
+    }
+    write_eeprom_kb();
 }
 
 void increase_left_dpi(void) {
@@ -131,6 +150,15 @@ void decrease_right_dpi(void) {
         write_eeprom_kb();
     }
 }
+
+int16_t get_left_dpi() {
+    return dpi_choices[global_saved_values.left_dpi_index];
+}
+
+int16_t get_right_dpi() {
+    return dpi_choices[global_saved_values.right_dpi_index];
+}
+
 // TODO: Still need to add code to save values.
 void set_left_dpi(uint8_t index) {
     uprintf("LDPI: %d %d\n", index, dpi_choices[index]);
@@ -161,7 +189,7 @@ void sval_set_active_layer(uint32_t layer, bool save) {
 // VIAL SPECIFIC FOR SVALBOARD + KEYBARD
 #ifdef VIAL_ENABLE
 void kb_sync_listener(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, void* out_data) {
-    // Just a ping-pong, no need to do anything.
+  global_saved_values.turbo_scan = ((const presence_rpc_t *)in_data)->turbo_scan;
 }
 
 // Called from via_init, we can check here if we're a fresh
@@ -186,7 +214,7 @@ void housekeeping_task_kb(void) {
     if (is_keyboard_master()) {
         static uint32_t last_ping = 0;
         if (timer_elapsed(last_ping) > 500) {
-            presence_rpc_t rpcout = {0};
+            presence_rpc_t rpcout = {global_saved_values.turbo_scan};
             presence_rpc_t rpcin = {0};
             if (transaction_rpc_exec(KEYBOARD_SYNC_A, sizeof(presence_rpc_t), &rpcout, sizeof(presence_rpc_t), &rpcin)) {
                 if (!is_connected) {
