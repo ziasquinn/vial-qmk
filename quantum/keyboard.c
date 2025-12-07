@@ -125,6 +125,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef SPLIT_KEYBOARD
 #    include "split_util.h"
 #endif
+#ifdef BATTERY_DRIVER
+#    include "battery.h"
+#endif
 #ifdef BLUETOOTH_ENABLE
 #    include "bluetooth.h"
 #endif
@@ -145,6 +148,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #ifdef LAYER_LOCK_ENABLE
 #    include "layer_lock.h"
+#endif
+#ifdef CONNECTION_ENABLE
+#    include "connection.h"
 #endif
 
 static uint32_t last_input_modification_time = 0;
@@ -438,8 +444,8 @@ void quantum_init(void) {
     }
 
     /* init globals */
-    debug_config.raw  = eeconfig_read_debug();
-    keymap_config.raw = eeconfig_read_keymap();
+    eeconfig_read_debug(&debug_config);
+    eeconfig_read_keymap(&keymap_config);
 
 #ifdef BOOTMAGIC_ENABLE
     bootmagic();
@@ -471,6 +477,9 @@ void keyboard_init(void) {
 #endif
     matrix_init();
     quantum_init();
+#ifdef CONNECTION_ENABLE
+    connection_init();
+#endif
     led_init_ports();
 #ifdef BACKLIGHT_ENABLE
     backlight_init_ports();
@@ -506,8 +515,9 @@ void keyboard_init(void) {
     steno_init();
 #endif
 #if defined(NKRO_ENABLE) && defined(FORCE_NKRO)
+#    pragma message "FORCE_NKRO option is now deprecated - Please migrate to NKRO_DEFAULT_ON instead."
     keymap_config.nkro = 1;
-    eeconfig_update_keymap(keymap_config.raw);
+    eeconfig_update_keymap(&keymap_config);
 #endif
 #ifdef DIP_SWITCH_ENABLE
     dip_switch_init();
@@ -527,6 +537,9 @@ void keyboard_init(void) {
 #ifdef POINTING_DEVICE_ENABLE
     // init after split init
     pointing_device_init();
+#endif
+#ifdef BATTERY_DRIVER
+    battery_init();
 #endif
 #ifdef BLUETOOTH_ENABLE
     bluetooth_init();
@@ -782,6 +795,10 @@ void keyboard_task(void) {
 
 #ifdef JOYSTICK_ENABLE
     joystick_task();
+#endif
+
+#ifdef BATTERY_DRIVER
+    battery_task();
 #endif
 
 #ifdef BLUETOOTH_ENABLE

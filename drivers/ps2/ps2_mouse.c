@@ -198,8 +198,8 @@ static inline void ps2_mouse_convert_report_to_hid(ps2_mouse_report_t *ps2_repor
     y *= PS2_MOUSE_Y_MULTIPLIER;
 
     // Constrain xy values to valid range
-    mouse_report->x = min(max(XY_REPORT_MIN, x), XY_REPORT_MAX);
-    mouse_report->y = min(max(XY_REPORT_MIN, y), XY_REPORT_MAX);
+    mouse_report->x = CONSTRAIN_HID_XY(x);
+    mouse_report->y = CONSTRAIN_HID_XY(y);
 
     // invert coordinate of y to conform to USB HID mouse
     mouse_report->y = -mouse_report->y;

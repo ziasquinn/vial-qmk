@@ -16,9 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-
 // This is used by our user's keymaps for conditionals.
 #define SVALBOARD
+
+#define POINTING_DEVICE_HIRES_SCROLL_ENABLE 1
+#define POINTING_DEVICE_HIRES_SCROLL_MULTIPLIER 120
+#define WHEEL_EXTENDED_REPORT 1
 
 #define AXIS_TYPE int16_t
 
@@ -32,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EE_HANDS
 //#define DEBUG_MATRIX_SCAN_RATE
 // Data size is 5 + (16 * 3), to include layer colors in HSV struct.
-#define EECONFIG_KB_DATA_SIZE 53
+#define EECONFIG_KB_DATA_SIZE 54
 
 #define FLASH_LEN (16 * 1024 * 1024)
 #define WEAR_LEVELING_BACKING_SIZE (128 * 1024)
@@ -44,7 +47,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //OL OU D IL MODE DOUBLE
 //Knuckle Nail Down Pad Up Double
 //#define THUMB_DOWN_ACTIVE_DARK
-
 #define MATRIX_COL_PUSHED_STATES { 0, 0, 1, 0, 0, 0 }
 #ifdef THUMB_DOWN_ACTIVE_DARK
     #define MATRIX_COL_PUSHED_STATES_THUMBS { 0, 0, 1, 0, 0, 0 }
@@ -52,8 +54,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define MATRIX_COL_PUSHED_STATES_THUMBS { 0, 0, 0, 0, 0, 0 }
 #endif
 #define DOUBLEDOWN_COL 5 // need a pullup on COL6
-#define PREWAIT_US 90
-#define POSTWAIT_US 90
 
 #define SERIAL_DEBUG
 #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET
@@ -67,13 +67,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define USB_MAX_POWER_CONSUMPTION 500
 #define USB_SUSPEND_WAKEUP_DELAY 500
-#define SELECT_SOFT_SERIAL_RATE {0}
+#define SERIAL_USART_SPEED 1000000
 
 #define MOUSE_EXTENDED_REPORT
 #define SPLIT_POINTING_ENABLE
 #define POINTING_DEVICE_COMBINED
 #define POINTING_DEVICE_AUTO_MOUSE_MH_ENABLE
-#define POINTING_DEVICE_TASK_THROTTLE_MS 5
+#define POINTING_DEVICE_TASK_THROTTLE_MS 1
+
 
 // Avoid slave-slave deadlock due to missing USB_VBUS_PIN.
 //
@@ -100,4 +101,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SPLIT_TRANSACTION_IDS_KB KEYBOARD_SYNC_A
 
 #define PERMISSIVE_HOLD
-#define ACHORDION_STREAK
+
+#define MOUSEKEY_WHEEL_DELTA 120
+
+#define OS_DETECTION_KEYBOARD_RESET
+
+#define PMW33XX_LIFTOFF_DISTANCE 0x00

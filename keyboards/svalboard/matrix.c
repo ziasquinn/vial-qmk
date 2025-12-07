@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "debounce.h"
 #include "quantum.h"
 #include "print.h"
+#include "svalboard.h"
 
 #define ROWS_PER_HAND 5
 
@@ -96,6 +97,9 @@ static void unselect_rows(void) {
 extern matrix_row_t raw_matrix[ROWS_PER_HAND]; // raw values
 extern matrix_row_t matrix[ROWS_PER_HAND];     // debounced values
 
+extern uint16_t sval_prewait_us[];
+extern uint16_t sval_postwait_us[];
+
 int16_t scans_before_dd_detect = 3;  // Has to be one higher than the actual number of scans.
 uint8_t dd_detected = 0;
 void matrix_read_cols_on_row(matrix_row_t current_matrix[], uint8_t current_row) {
@@ -105,7 +109,7 @@ void matrix_read_cols_on_row(matrix_row_t current_matrix[], uint8_t current_row)
     select_row(current_row);
     // if thumb row use col_pushed_states_thumbs
 
-    wait_us(PREWAIT_US);
+    wait_us(sval_prewait_us[global_saved_values.turbo_scan]);
 
     // For each col...
     for (uint8_t col_index = 0; col_index < MATRIX_COLS; col_index++) {
@@ -132,7 +136,7 @@ void matrix_read_cols_on_row(matrix_row_t current_matrix[], uint8_t current_row)
 
     // Unselect row
     unselect_row(current_row);
-    wait_us(POSTWAIT_US);
+    wait_us(sval_postwait_us[global_saved_values.turbo_scan]);
 
     // Update the matrix
     current_matrix[current_row] = current_row_value;

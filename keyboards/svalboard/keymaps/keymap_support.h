@@ -31,7 +31,7 @@ enum my_keycodes {
     SV_RECALIBRATE_POINTER,
     SV_MH_CHANGE_TIMEOUTS,
     SV_CAPS_WORD,
-    SV_TOGGLE_ACHORDION,
+    SV_AXIS_SCROLL_LOCK,
     SV_TOGGLE_23_67,
     SV_TOGGLE_45_67,
     SV_SNIPER_2,
@@ -41,7 +41,7 @@ enum my_keycodes {
     SV_SCROLL_TOGGLE,
     SV_OUTPUT_STATUS,
     SV_TOGGLE_AUTOMOUSE,
-    // New keycodes should go here, to avoid breaking existing keymaps - order must match vial.json
+    SV_TURBO_SCAN,
     KC_NORMAL_HOLD = SAFE_RANGE,
     KC_FUNC_HOLD,
     SV_SAFE_RANGE, // Keycodes over this are safe on Svalboard.

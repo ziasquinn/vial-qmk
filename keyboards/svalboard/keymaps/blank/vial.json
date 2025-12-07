@@ -52,9 +52,9 @@
         "name": "SV_CAPS_WORD"
       },
       {
-        "shortName": "Toggle\nACH",
-        "title": "Toggle Achordion",
-        "name": "SV_TOGGLE_ACHORDION"
+        "shortName": "Axis\nScroll\nLock",
+        "title": "Toggle Axis Scroll Lock.",
+        "name": "SV_AXIS_SCROLL_LOCK"
       },
       {
         "shortName": "MO 23\n(45=67)",
@@ -82,28 +82,38 @@
         "name": "SV_SNIPER_5"
       },
       {
-        "shortName": "Scroll\nLeft\nHold",
-        "title": "Hold to make the left pointing device scroll",
-        "name": "SV_LEFT_SCROLL_HOLD"
+	"shortName": "Scroll\nToggle\nHold",
+	"title": "Hold to toggle the scrolling mode of both pointers.",
+	"name": "SV_SCROLL_HOLD"
       },
       {
-        "shortName": "Scroll\nRight\nHold",
-        "title": "Hold to make the right pointing device scroll",
-        "name": "SV_RIGHT_SCROLL_HOLD"
+	"shortName": "Scroll\nToggle",
+	"title": "Press to toggle the scrolling mode of both pointers.",
+	"name": "SV_SCROLL_TOGGLE"
       },
       {
 	"shortName": "Output\nStatus",
 	"title": "Output the current internal state of the keyboard.",
 	"name": "SV_OUTPUT_STATUS"
-      }    
+      },
+      {
+        "shortName": "AutoMouse\nToggle",
+        "title": "Toggle Auto Mouse layer activation.",
+        "name": "SV_TOGGLE_AUTOMOUSE"
+      },
+      {
+	 "shortName": "Turbo\nScan",
+	 "title": "Change the scan mode of the keyboard.",
+	 "name": "SV_TURBO_SCAN"
+      }
     ],
     "layouts": {
     "labels": [
       "Normal",
       [
-        "SS",
-        "No SS",
-        "SS"
+        "2S",
+        "No 2S",
+        "2S"
       ]
     ],
       "keymap": [

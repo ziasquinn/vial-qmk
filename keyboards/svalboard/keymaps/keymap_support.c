@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdbool.h>
 #include <stdint.h>
 #include "svalboard.h"
-#include "features/achordion.h"
 #include "keymap_support.h"
 #include "axis_scale.h"
 
@@ -41,20 +40,56 @@ void mouse_mode(bool);
 
 #if defined(POINTING_DEVICE_AUTO_MOUSE_MH_ENABLE)
 
-#define SCROLL_DIVISOR 20
 
+#define SCROLL_FREQUENCY_MS 10
+#define SCROLL_DIVISOR 1
+#define SCROLL_MULTIPLIER 1
 bool mouse_mode_enabled = false;
 
-axis_scale_t l_x = {1, SCROLL_DIVISOR, 0};
-axis_scale_t l_y = {1, SCROLL_DIVISOR, 0};
-axis_scale_t r_x = {1, SCROLL_DIVISOR, 0};
-axis_scale_t r_y = {1, SCROLL_DIVISOR, 0};
+axis_scale_t l_x = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
+axis_scale_t l_y = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
+axis_scale_t r_x = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
+axis_scale_t r_y = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 
+#define MAC_DIVISOR 120
+bool is_mac = false;
+bool process_detected_host_os_kb(os_variant_t os) {
+    if (!process_detected_host_os_user(os)) {
+        return false;
+    }
+
+    switch (os) {
+        case OS_MACOS:
+        case OS_IOS:
+            set_div_axis(&l_x, MAC_DIVISOR);
+            set_div_axis(&l_y, MAC_DIVISOR);
+            set_div_axis(&r_x, MAC_DIVISOR);
+            set_div_axis(&r_y, MAC_DIVISOR);
+	    is_mac = true;
+            break;
+        default:
+            set_div_axis(&l_x, SCROLL_DIVISOR);
+            set_div_axis(&l_y, SCROLL_DIVISOR);
+            set_div_axis(&r_x, SCROLL_DIVISOR);
+            set_div_axis(&r_y, SCROLL_DIVISOR);
+	    is_mac = false;
+	    break;
+    }
+    return true;
+}
 
 axis_scale_t sniper_x = {1, 1, 0};
 axis_scale_t sniper_y = {1, 1, 0};
 axis_scale_t sniper_h = {1, 1, 0};
 axis_scale_t sniper_v = {1, 1, 0};
+
+uint16_t scroll_timer = 0;
+int16_t scroll_accumulator_h = 0;
+int16_t scroll_accumulator_v = 0;
+int32_t m_scroll_accumulator_h = 0;
+int32_t m_scroll_accumulator_v = 0;
+
+bool scroll_timer_running = false;
 
 bool enable_scale_2 = false;
 bool enable_scale_3 = false;
@@ -62,6 +97,107 @@ bool enable_scale_5 = false;
 
 static bool scroll_hold    = false,
             scroll_toggle  = false;
+
+
+#define AXIS_LOCK_BREAKAWAY_THRESHOLD 18750
+#define AXIS_LOCK_ENGAGE_THRESHOLD 6250
+#define AXIS_LOCK_TIMEOUT_MS 500
+
+#define AXIS_DOMINANCE_NUMERATOR 3
+#define AXIS_DOMINANCE_DENOMINATOR 2
+
+
+static enum scroll_mode {
+    SV_AXIS_FREE,
+    SV_AXIS_LOCKED_V,
+    SV_AXIS_LOCKED_H
+} axis_scroll_mode = SV_AXIS_FREE;
+static int32_t axis_lock_accum_h = 0;
+static int32_t axis_lock_accum_v = 0;
+static uint16_t axis_lock_timer = 0;
+
+
+void update_axis_scroll_mode(int32_t h, int32_t v) {
+    if (h != 0 || v != 0) {
+        axis_lock_timer = timer_read();
+    } else {
+        if (timer_elapsed(axis_lock_timer) > AXIS_LOCK_TIMEOUT_MS) {
+            if (axis_scroll_mode != SV_AXIS_FREE) {
+                axis_scroll_mode = SV_AXIS_FREE;
+                axis_lock_accum_h = 0;
+                axis_lock_accum_v = 0;
+		scroll_accumulator_h = 0;
+                scroll_accumulator_v = 0;
+		m_scroll_accumulator_h = 0;
+		m_scroll_accumulator_v = 0;
+            }
+        }
+        return;
+    }
+
+    switch (axis_scroll_mode) {
+        case SV_AXIS_FREE:
+            axis_lock_accum_h += h;
+            axis_lock_accum_v += v;
+
+            if (abs(axis_lock_accum_v) * AXIS_DOMINANCE_NUMERATOR >= abs(axis_lock_accum_h) * AXIS_DOMINANCE_DENOMINATOR) {
+	        axis_scroll_mode = SV_AXIS_LOCKED_V;
+                axis_lock_accum_h = 0;
+            } else if (abs(axis_lock_accum_h) >= AXIS_LOCK_ENGAGE_THRESHOLD) {
+                axis_scroll_mode = SV_AXIS_LOCKED_H;
+                axis_lock_accum_v = 0;
+            }
+            break;
+
+        case SV_AXIS_LOCKED_V:
+            if ((int32_t)abs(v) * AXIS_DOMINANCE_NUMERATOR >= (int32_t)abs(h) * AXIS_DOMINANCE_DENOMINATOR) {
+                axis_lock_accum_h = 0;
+            }
+
+	    axis_lock_accum_h += h;
+
+            if (abs(axis_lock_accum_h) >= AXIS_LOCK_BREAKAWAY_THRESHOLD) {
+	        axis_scroll_mode     = SV_AXIS_LOCKED_H;
+                axis_lock_accum_v    = 0;
+                scroll_accumulator_h = 0;
+                scroll_accumulator_v = 0;
+		m_scroll_accumulator_h = 0;
+		m_scroll_accumulator_v = 0;
+            }
+        break;
+
+        case SV_AXIS_LOCKED_H:
+            if ((int32_t)abs(h) * AXIS_DOMINANCE_NUMERATOR >= (int32_t)abs(v) * AXIS_DOMINANCE_DENOMINATOR) {
+                axis_lock_accum_v = 0;
+            }
+
+            axis_lock_accum_v += v;
+
+            if (abs(axis_lock_accum_v) >= AXIS_LOCK_BREAKAWAY_THRESHOLD) {
+                axis_scroll_mode     = SV_AXIS_LOCKED_V;
+                axis_lock_accum_h    = 0;
+                scroll_accumulator_h = 0;
+                scroll_accumulator_v = 0;
+		m_scroll_accumulator_h = 0;
+		m_scroll_accumulator_v = 0;
+            }
+            break;
+    }
+}
+
+void handle_sniper_key(bool pressed, uint8_t divisor) {
+    if (!pressed) {
+        div_div_axis(&sniper_x, divisor);
+        div_div_axis(&sniper_y, divisor);
+        div_div_axis(&sniper_h, divisor);
+        div_div_axis(&sniper_v, divisor);
+    } else {
+        mult_div_axis(&sniper_x, divisor);
+        mult_div_axis(&sniper_y, divisor);
+        mult_div_axis(&sniper_h, divisor);
+        mult_div_axis(&sniper_v, divisor);
+    }
+}
 
 report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, report_mouse_t reportMouse2) {
     report_mouse_t ret_mouse;
@@ -85,10 +221,10 @@ report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, r
         reportMouse1.h = add_to_axis(&l_x, reportMouse1.x);
         reportMouse1.v = add_to_axis(&l_y, -reportMouse1.y);
 
+	
         reportMouse1.x = 0;
         reportMouse1.y = 0;
     }
-
     if ((global_saved_values.right_scroll != scroll_hold) != scroll_toggle) {
         reportMouse2.h = add_to_axis(&r_x, reportMouse2.x);
         reportMouse2.v = add_to_axis(&r_y, -reportMouse2.y);
@@ -97,28 +233,58 @@ report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, r
         reportMouse2.y = 0;
     }
 
+    if ((reportMouse1.h != 0 || reportMouse1.v != 0 || reportMouse2.h != 0 || reportMouse2.v != 0) && !scroll_timer_running) {
+        scroll_timer_running = true;
+        scroll_timer = timer_read();
+    }
+
+    if (scroll_timer_running) {
+        m_scroll_accumulator_h += ((int32_t)reportMouse1.h * 100000) / get_left_dpi();
+	m_scroll_accumulator_v += ((int32_t)reportMouse1.v * 100000) / get_left_dpi();
+	m_scroll_accumulator_h += ((int32_t)reportMouse2.h * 100000) / get_right_dpi();
+	m_scroll_accumulator_v += ((int32_t)reportMouse2.v * 100000) / get_right_dpi();
+
+        scroll_accumulator_h += reportMouse1.h + reportMouse2.h;
+        scroll_accumulator_v += reportMouse1.v + reportMouse2.v;
+        reportMouse1.h = reportMouse2.h = 0;
+        reportMouse1.v = reportMouse2.v = 0;
+    }
+
+    if (scroll_timer_running && timer_elapsed(scroll_timer) > SCROLL_FREQUENCY_MS) {
+        if (global_saved_values.axis_scroll_lock && !is_mac) {
+	    update_axis_scroll_mode(m_scroll_accumulator_h, m_scroll_accumulator_v);
+            if (axis_scroll_mode == SV_AXIS_LOCKED_V) {
+                reportMouse1.v = scroll_accumulator_v;
+                reportMouse1.h = 0;
+            } else {
+                reportMouse1.h = scroll_accumulator_h;
+                reportMouse1.v = 0;
+            }
+        } else {
+            reportMouse1.h = scroll_accumulator_h;
+            reportMouse1.v = scroll_accumulator_v;
+        }
+
+        scroll_timer_running = false;
+        scroll_accumulator_h = 0;
+        scroll_accumulator_v = 0;
+	m_scroll_accumulator_h = 0;
+	m_scroll_accumulator_v = 0;
+    }
+
     mouse_mode(true);
     ret_mouse = pointing_device_combine_reports(reportMouse1, reportMouse2);
 
     return pointing_device_task_user(ret_mouse);
 }
 
-void handle_sniper_key(bool pressed, uint8_t divisor) {
-    if (!pressed) {
-        div_div_axis(&sniper_x, divisor);
-        div_div_axis(&sniper_y, divisor);
-        div_div_axis(&sniper_h, divisor);
-        div_div_axis(&sniper_v, divisor);
-    } else {
-        mult_div_axis(&sniper_x, divisor);
-        mult_div_axis(&sniper_y, divisor);
-        mult_div_axis(&sniper_h, divisor);
-        mult_div_axis(&sniper_v, divisor);
-    }
+void toggle_axis_scroll_lock(void) {
+    global_saved_values.axis_scroll_lock = !global_saved_values.axis_scroll_lock;
+    write_eeprom_kb();
 }
 
 report_mouse_t pointing_device_task_user(report_mouse_t reportMouse) {
-    if (reportMouse.x == 0 && reportMouse.y == 0)
+   if (reportMouse.x == 0 && reportMouse.y == 0 && reportMouse.h == 0 && reportMouse.v == 0)
         return reportMouse;
 
     mouse_mode(true);
@@ -134,11 +300,6 @@ void mh_change_timeouts(void) {
         global_saved_values.mh_timer_index++;
     }
     uprintf("mh_timer:%d\n", mh_timer_choices[global_saved_values.mh_timer_index]);
-    write_eeprom_kb();
-}
-
-void toggle_achordion(void) {
-    global_saved_values.disable_achordion = !global_saved_values.disable_achordion;
     write_eeprom_kb();
 }
 
@@ -160,7 +321,6 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 
     // Abort additional processing if userspace code did
     if (!process_record_user(keycode, record)) { return false;}
-    if (!in_mod_tap && !global_saved_values.disable_achordion && !process_achordion(keycode, record)) { return false; }
 
     // We are in a mod tap, with a KC_TRANSPARENT, lets make it transparent...
     if (IS_QK_MOD_TAP(keycode) && ((keycode & 0xFF) == KC_TRANSPARENT) &&
@@ -201,7 +361,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 	                    keycode == SV_RIGHT_DPI_DEC || \
 	                    keycode == SV_LEFT_SCROLL_TOGGLE || \
 		            keycode == SV_RIGHT_SCROLL_TOGGLE || \
-		            keycode == SV_TOGGLE_ACHORDION || \
+		            keycode == SV_AXIS_SCROLL_LOCK || \
 	                    keycode == SV_MH_CHANGE_TIMEOUTS || \
                         keycode == SV_TOGGLE_AUTOMOUSE)
 
@@ -262,8 +422,8 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
             case SV_CAPS_WORD:
                 caps_word_toggle();
                 return false;
-            case SV_TOGGLE_ACHORDION:
-                toggle_achordion();
+            case SV_AXIS_SCROLL_LOCK:
+                toggle_axis_scroll_lock();
                 return false;
             case SV_TOGGLE_23_67:
                 layer_on(2);
@@ -304,6 +464,9 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
                 global_saved_values.auto_mouse = !global_saved_values.auto_mouse;
                 write_eeprom_kb();
                 return false;
+	    case SV_TURBO_SCAN:
+	        change_turbo_scan();
+	        return false;
         }
     } else { // key released
         switch (keycode) {
@@ -350,10 +513,6 @@ void ps2_mouse_moved_user(report_mouse_t *mouse_report) {
 #endif
 
 void matrix_scan_kb(void) {
-    if (!global_saved_values.disable_achordion) {
-        achordion_task();
-    }
-
     if ((mh_timer_choices[global_saved_values.mh_timer_index] >= 0) && mouse_mode_enabled && (timer_elapsed(mh_auto_buttons_timer) > mh_timer_choices[global_saved_values.mh_timer_index]) && mouse_keys_pressed == 0) {
         if (!tp_buttons) {
             mouse_mode(false);

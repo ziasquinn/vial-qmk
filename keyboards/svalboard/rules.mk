@@ -24,6 +24,9 @@ LAYER_LOCK_ENABLE = yes
 # this turns on Manna-Harbour's automousekeys:
 MH_AUTO_BUTTONS = yes
 
+OS_DETECTION_ENABLE = yes
+NO_USB_STARTUP_CHECK = yes
+
 ifeq ($(strip $(MH_AUTO_BUTTONS)), yes)
   OPT_DEFS += -DMH_AUTO_BUTTONS
 endif
