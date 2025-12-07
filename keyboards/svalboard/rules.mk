@@ -2,7 +2,8 @@
 MCU = RP2040
 BOOTLOADER = rp2040
 BOARD = GENERIC_RP_RP2040
-
+# Cures inability to interact with BIOS on boot up, possibly only in combinaton of the undef split_usb_check within ./config.h, see: https://github.com/Cyboard-DigitalTailor/vial-qmk-old/pull/1/files
+NO_USB_STARTUP_CHECK = yes
 # we want some pretty lights
 RGBLIGHT_ENABLE = yes
 RGBLIGHT_SPLIT = yes

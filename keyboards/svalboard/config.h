@@ -83,6 +83,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // needs to be reset to come to life.
 #define SPLIT_WATCHDOG_ENABLE
 
+// And yet, with boards with vbus pin capability, turning this off does HELP. Maybe only in combination with the watchdog?
+// https://github.com/qmk/qmk_firmware/issues/18511#issuecomment-1264604610
+// https://github.com/qmk/qmk_firmware/issues/8990#issuecomment-851055637
+#undef SPLIT_USB_DETECT
+
 // WS2812-fu here:
 //  pretty lights
 //  https://docs.qmk.fm/#/feature_rgblight?id=configuration
