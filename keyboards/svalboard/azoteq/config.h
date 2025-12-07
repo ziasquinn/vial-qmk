@@ -6,9 +6,18 @@
 
 #define AZOTEQ_IQS5XX_TPS43
 #define AZOTEQ_IQS5XX_TIMEOUT_MS 10
+
+//Lets you drag/select with m1
 #define AZOTEQ_IQS5XX_PRESS_AND_HOLD_ENABLE true
-//This decreases the required 'wait' time to activate dragging/selecting on a touchpad from default 300ms to 20ms. Big QoL. 
-#define AZOTEQ_IQS5XX_HOLD_TIME 20
+//This decreases the required 'wait' time to activate dragging/selecting on a touchpad from default 300ms to 200ms.
+#define AZOTEQ_IQS5XX_HOLD_TIME 200
+
+//This lowers the maximum time for recognizing a tap from default 150ms to 100ms.
+#define AZOTEQ_IQS5XX_TAP_TIME 100
+//Maximum Tap distance before a tap doesn't count, in pixels. Default is 25 pixels.
+#define AZOTEQ_IQS5XX_TAP_DISTANCE 25
+//Increases the distance needed to trigger 'scrolling,' must interact with the tap distance. Default is 50 pixels, increasing buffer between tap and scroll distance should help.
+#define AZOTEQ_IQS5XX_SCROLL_INITIAL_DISTANCE 75
 //#define POINTING_DEVICE_MOTION_PIN GP18
 
 #define SPLIT_POINTING_ENABLE
