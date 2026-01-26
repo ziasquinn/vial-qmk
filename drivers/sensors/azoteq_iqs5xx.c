@@ -324,7 +324,7 @@ void azoteq_iqs5xx_setup_resolution(void) {
 
 static i2c_status_t azoteq_iqs5xx_init_status = 1;
 
-bool azoteq_iqs5xx_init(void) {
+void azoteq_iqs5xx_init(void) {
     i2c_init();
     i2c_ping_address(AZOTEQ_IQS5XX_ADDRESS, 1); // wake
     azoteq_iqs5xx_reset_suspend(true, false, true);
