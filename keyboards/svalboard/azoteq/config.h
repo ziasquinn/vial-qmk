@@ -6,13 +6,21 @@
 
 #define AZOTEQ_IQS5XX_TPS43
 #define AZOTEQ_IQS5XX_TIMEOUT_MS 10
+// Keep press_and_hold enabled in hardware to avoid gesture engine stalls,
+// but don't act on it — see AZOTEQ_IQS5XX_PRESS_AND_HOLD_AS_CLICK below.
 #define AZOTEQ_IQS5XX_PRESS_AND_HOLD_ENABLE true
+#define AZOTEQ_IQS5XX_PRESS_AND_HOLD_AS_CLICK false
 
-#define AZOTEQ_IQS5XX_TAP_TIME 100
-// TAP_TIME default is 150ms
-#define AZOTEQ_IQS5XX_HOLD_TIME 200 
+#define AZOTEQ_IQS5XX_TAP_DRAG_ENABLE true
+#define AZOTEQ_IQS5XX_TAP_DRAG_WINDOW_MS 200
+
+#define AZOTEQ_IQS5XX_SCROLL_DIVISOR 8
+
+#define AZOTEQ_IQS5XX_TAP_TIME 200
+// TAP_TIME default is 150ms. Raised since we no longer act on press_and_hold,
+// so there's no need to keep TAP_TIME short to disambiguate the two.
+#define AZOTEQ_IQS5XX_HOLD_TIME 300
 // HOLD_TIME default is 300ms
-// Here, we decrease the TAP_TIME to account for the reduced in HOLD_TIME so they aren't confused with each other.
 
 //#define POINTING_DEVICE_MOTION_PIN GP18
 
