@@ -86,7 +86,7 @@ const char *yes_or_no(int flag) {
     }
 }
 
-const uint16_t dpi_choices[] = { 200, 400, 600, 800, 1200, 1600, 2400, 3200, 4800, 6400, 12000 }; // If we need more, add them.
+const uint16_t dpi_choices[] = { 200, 400, 600, 800, 1000, 1200, 1600, 2400, 3200, 4800, 6400, 12000 }; // If we need more, add them.
 #define DPI_CHOICES_LENGTH (sizeof(dpi_choices)/sizeof(dpi_choices[0]))
 extern bool is_mac;
 
