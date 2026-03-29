@@ -146,6 +146,7 @@ ifeq ($(strip $(POINTING_DEVICE_ENABLE)), yes)
             ANALOG_DRIVER_REQUIRED = yes
         else ifeq ($(strip $(POINTING_DEVICE_DRIVER)), azoteq_iqs5xx)
             I2C_DRIVER_REQUIRED = yes
+            SRC += $(QUANTUM_DIR)/pointing_device/pointing_device_gestures.c
         else ifeq ($(strip $(POINTING_DEVICE_DRIVER)), cirque_pinnacle_i2c)
             I2C_DRIVER_REQUIRED = yes
             SRC += drivers/sensors/cirque_pinnacle.c

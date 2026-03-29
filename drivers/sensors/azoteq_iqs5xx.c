@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "azoteq_iqs5xx.h"
-#include "axis_scale.h"
 #include "pointing_device_internal.h"
+#include "pointing_device_gestures.h"
 #include "timer.h"
 #include "wait.h"
 
@@ -79,15 +79,6 @@
 #endif
 #ifndef AZOTEQ_IQS5XX_ZOOM_CONSECUTIVE_DISTANCE
 #    define AZOTEQ_IQS5XX_ZOOM_CONSECUTIVE_DISTANCE 0x19
-#endif
-#ifndef AZOTEQ_IQS5XX_SCROLL_DIVISOR
-#    define AZOTEQ_IQS5XX_SCROLL_DIVISOR 1
-#endif
-#ifndef AZOTEQ_IQS5XX_TAP_DRAG_ENABLE
-#    define AZOTEQ_IQS5XX_TAP_DRAG_ENABLE false
-#endif
-#ifndef AZOTEQ_IQS5XX_TAP_DRAG_WINDOW_MS
-#    define AZOTEQ_IQS5XX_TAP_DRAG_WINDOW_MS 200
 #endif
 #ifndef AZOTEQ_IQS5XX_EVENT_MODE
 // Event mode can't be used until the pointing code has changed (stuck buttons)
@@ -362,14 +353,6 @@ void azoteq_iqs5xx_init(void) {
     }
 };
 
-static axis_scale_t scroll_scale_h = { .mult = 1, .div = AZOTEQ_IQS5XX_SCROLL_DIVISOR, .remainder = 0 };
-static axis_scale_t scroll_scale_v = { .mult = 1, .div = AZOTEQ_IQS5XX_SCROLL_DIVISOR, .remainder = 0 };
-
-#if AZOTEQ_IQS5XX_TAP_DRAG_ENABLE
-static bool     tap_drag_armed  = false;
-static bool     tap_drag_active = false;
-static uint16_t tap_drag_timer  = 0;
-#endif
 
 report_mouse_t azoteq_iqs5xx_get_report(report_mouse_t mouse_report) {
     report_mouse_t temp_report = {0};
@@ -394,6 +377,9 @@ report_mouse_t azoteq_iqs5xx_get_report(report_mouse_t mouse_report) {
 #endif
             ) {
                 pd_dprintf("IQS5XX - Single tap/hold.\n");
+#if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+                pointing_device_gesture_notify_tap();
+#endif
                 temp_report.buttons = pointing_device_handle_buttons(temp_report.buttons, true, POINTING_DEVICE_BUTTON1);
             } else if (base_data.gesture_events_1.two_finger_tap) {
                 pd_dprintf("IQS5XX - Two finger tap.\n");
@@ -424,37 +410,11 @@ report_mouse_t azoteq_iqs5xx_get_report(report_mouse_t mouse_report) {
                 }
             } else if (base_data.gesture_events_1.scroll) {
                 pd_dprintf("IQS5XX - Scroll.\n");
-                temp_report.h = CONSTRAIN_HID_HV(add_to_axis(&scroll_scale_h, AZOTEQ_IQS5XX_COMBINE_H_L_BYTES(base_data.x.h, base_data.x.l)));
-                temp_report.v = CONSTRAIN_HID_HV(add_to_axis(&scroll_scale_v, -AZOTEQ_IQS5XX_COMBINE_H_L_BYTES(base_data.y.h, base_data.y.l)));
-            } else {
-                clear_remainder_axis(&scroll_scale_h);
-                clear_remainder_axis(&scroll_scale_v);
+                temp_report.h = CONSTRAIN_HID_HV(AZOTEQ_IQS5XX_COMBINE_H_L_BYTES(base_data.x.h, base_data.x.l));
+                temp_report.v = CONSTRAIN_HID_HV(AZOTEQ_IQS5XX_COMBINE_H_L_BYTES(base_data.y.h, base_data.y.l));
             }
-#if AZOTEQ_IQS5XX_TAP_DRAG_ENABLE
-            // Tap-to-drag: tap, lift, quickly touch again to drag.
-            // BUTTON1 is held throughout the drag window so macOS sees
-            // one continuous press (required for window dragging, etc.).
-            if (base_data.gesture_events_0.single_tap) {
-                tap_drag_armed  = true;
-                tap_drag_active = false;
-                tap_drag_timer  = timer_read();
-            } else if (tap_drag_active) {
-                if (base_data.number_of_fingers >= 1) {
-                    temp_report.buttons = pointing_device_handle_buttons(temp_report.buttons, true, POINTING_DEVICE_BUTTON1);
-                } else {
-                    tap_drag_active = false;
-                }
-            } else if (tap_drag_armed) {
-                // Keep BUTTON1 held during the window so there's no gap.
-                temp_report.buttons = pointing_device_handle_buttons(temp_report.buttons, true, POINTING_DEVICE_BUTTON1);
-                if (timer_elapsed(tap_drag_timer) >= AZOTEQ_IQS5XX_TAP_DRAG_WINDOW_MS) {
-                    tap_drag_armed = false;
-                    // Release — finger didn't come back in time.
-                } else if (base_data.number_of_fingers == 1) {
-                    tap_drag_active = true;
-                    tap_drag_armed  = false;
-                }
-            }
+#if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+            pointing_device_gesture_notify_fingers(base_data.number_of_fingers);
 #endif
             if (base_data.number_of_fingers == 1 && !ignore_movement) {
                 temp_report.x = CONSTRAIN_HID_XY(AZOTEQ_IQS5XX_COMBINE_H_L_BYTES(base_data.x.h, base_data.x.l));

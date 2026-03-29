@@ -131,3 +131,83 @@ void cursor_glide_update(cursor_glide_context_t* glide, mouse_xy_report_t dx, mo
     status->z   = z;
 }
 #endif
+
+/* ── Scroll divisor (remainder-preserving) ───────────────────────── */
+#if POINTING_DEVICE_GESTURES_SCROLL_DIVISOR > 1
+static int16_t scroll_remainder_h = 0;
+static int16_t scroll_remainder_v = 0;
+
+static inline mouse_hv_report_t apply_scroll_divisor(int16_t* remainder, mouse_hv_report_t val) {
+    *remainder += val;
+    mouse_hv_report_t result = *remainder / POINTING_DEVICE_GESTURES_SCROLL_DIVISOR;
+    *remainder -= result * POINTING_DEVICE_GESTURES_SCROLL_DIVISOR;
+    return result;
+}
+#endif
+
+/* ── Tap-to-drag state machine ───────────────────────────────────── */
+#if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+#    include "pointing_device.h"
+
+static bool     tap_drag_armed       = false;
+static bool     tap_drag_active      = false;
+static uint16_t tap_drag_timer       = 0;
+static uint8_t  gesture_finger_count = 0;
+
+void pointing_device_gesture_notify_tap(void) {
+    tap_drag_armed  = true;
+    tap_drag_active = false;
+    tap_drag_timer  = timer_read();
+}
+
+void pointing_device_gesture_notify_fingers(uint8_t count) {
+    gesture_finger_count = count;
+}
+
+static report_mouse_t apply_tap_drag(report_mouse_t mouse_report) {
+    if (tap_drag_active) {
+        if (gesture_finger_count >= 1) {
+            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
+        } else {
+            tap_drag_active = false;
+        }
+    } else if (tap_drag_armed) {
+        /* Keep BUTTON1 held during the window so there's no gap. */
+        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
+        if (timer_elapsed(tap_drag_timer) >= POINTING_DEVICE_GESTURES_TAP_DRAG_WINDOW_MS) {
+            tap_drag_armed = false;
+            /* Release — finger didn't come back in time. */
+        } else if (gesture_finger_count == 1) {
+            tap_drag_active = true;
+            tap_drag_armed  = false;
+        }
+    }
+    return mouse_report;
+}
+#endif
+
+/* ── Main gesture processing entry point ─────────────────────────── */
+report_mouse_t pointing_device_gestures_process(report_mouse_t mouse_report) {
+    /* Natural scroll: invert vertical scroll direction */
+#if POINTING_DEVICE_GESTURES_NATURAL_SCROLL_ENABLE
+    mouse_report.v = -mouse_report.v;
+#endif
+
+    /* Scroll divisor */
+#if POINTING_DEVICE_GESTURES_SCROLL_DIVISOR > 1
+    if (mouse_report.h != 0 || mouse_report.v != 0) {
+        mouse_report.h = apply_scroll_divisor(&scroll_remainder_h, mouse_report.h);
+        mouse_report.v = apply_scroll_divisor(&scroll_remainder_v, mouse_report.v);
+    } else {
+        scroll_remainder_h = 0;
+        scroll_remainder_v = 0;
+    }
+#endif
+
+    /* Tap-to-drag */
+#if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+    mouse_report = apply_tap_drag(mouse_report);
+#endif
+
+    return mouse_report;
+}

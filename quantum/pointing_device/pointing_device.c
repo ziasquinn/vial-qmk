@@ -17,6 +17,7 @@
  */
 
 #include "pointing_device.h"
+#include "pointing_device_gestures.h"
 #include <string.h>
 #include "timer.h"
 #include "gpio.h"
@@ -359,6 +360,9 @@ __attribute__((weak)) bool pointing_device_task(void) {
     local_mouse_report = pointing_device_adjust_by_defines(local_mouse_report);
 #endif
     local_mouse_report = pointing_device_task_modules(local_mouse_report);
+#ifdef POINTING_DEVICE_GESTURES_ENABLE
+    local_mouse_report = pointing_device_gestures_process(local_mouse_report);
+#endif
     local_mouse_report = pointing_device_task_kb(local_mouse_report);
     // automatic mouse layer function
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE

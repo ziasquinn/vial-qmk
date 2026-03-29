@@ -56,3 +56,46 @@ cursor_glide_t cursor_glide_start(cursor_glide_context_t* glide);
 /* Update glide engine on the latest cursor movement, cursor glide is based on the final movement */
 void cursor_glide_update(cursor_glide_context_t* glide, mouse_xy_report_t dx, mouse_xy_report_t dy, uint16_t z);
 #endif
+
+/* ── Scroll divisor ─────────────────────────────────────────────── */
+#ifndef POINTING_DEVICE_GESTURES_SCROLL_DIVISOR
+#    define POINTING_DEVICE_GESTURES_SCROLL_DIVISOR 1
+#endif
+
+/* ── Natural (inverted) scrolling ────────────────────────────────── */
+#ifndef POINTING_DEVICE_GESTURES_NATURAL_SCROLL_ENABLE
+#    define POINTING_DEVICE_GESTURES_NATURAL_SCROLL_ENABLE false
+#endif
+
+/* ── Tap-to-drag ─────────────────────────────────────────────────── */
+#ifndef POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+#    define POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE false
+#endif
+#ifndef POINTING_DEVICE_GESTURES_TAP_DRAG_WINDOW_MS
+#    define POINTING_DEVICE_GESTURES_TAP_DRAG_WINDOW_MS 200
+#endif
+
+#if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+/**
+ * Drivers call this when hardware detects a single-tap gesture.
+ * The gestures module then manages the tap-to-drag state machine.
+ */
+void pointing_device_gesture_notify_tap(void);
+
+/**
+ * Drivers call this to report the current finger count so the
+ * tap-to-drag state machine can detect finger-down for drag.
+ */
+void pointing_device_gesture_notify_fingers(uint8_t count);
+#endif
+
+/* Define a flag so pointing_device.c knows to call us */
+#if POINTING_DEVICE_GESTURES_SCROLL_DIVISOR > 1 || POINTING_DEVICE_GESTURES_NATURAL_SCROLL_ENABLE || POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+#    define POINTING_DEVICE_GESTURES_ENABLE
+#endif
+
+/**
+ * Process gestures on the mouse report (scroll divisor, natural scroll, tap-to-drag).
+ * Called from the pointing device pipeline.
+ */
+report_mouse_t pointing_device_gestures_process(report_mouse_t mouse_report);
