@@ -455,6 +455,9 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
             case SV_OUTPUT_STATUS:
                 output_keyboard_info();
                 return false;
+            case SV_TAP_DRAG_CYCLE:
+                cycle_tap_drag();
+                return false;
             case SV_TOGGLE_AUTOMOUSE:
                 //if we disable automouse, manually kick out of mouse mode in case timer was running
                 //needs to go first to avoid the lockout

@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quantum.h"
 
 extern const int16_t mh_timer_choices[6];
+extern const int16_t tap_drag_choices[];
 extern bool fresh_install;
 
 struct layer_hsv {
@@ -39,6 +40,7 @@ struct __attribute__((__packed__)) saved_values {
     uint8_t mh_timer_index;
     struct layer_hsv layer_colors[DYNAMIC_KEYMAP_LAYER_COUNT];
     uint8_t turbo_scan;
+    uint8_t tap_drag_index;
 };
 
 #define SVAL_PROTO_VERSION 3
@@ -75,3 +77,5 @@ void sval_set_active_layer(uint32_t layer, bool save);
 void sval_on_reconnect(void);
 int16_t get_left_dpi(void);
 int16_t get_right_dpi(void);
+void cycle_tap_drag(void);
+void set_tap_drag_from_eeprom(void);

@@ -145,16 +145,54 @@ static inline mouse_hv_report_t apply_scroll_divisor(int16_t* remainder, mouse_h
 }
 #endif
 
-/* ── Tap-to-drag state machine ───────────────────────────────────── */
+/* ── Scroll momentum (kinetic scrolling) ─────────────────────────── */
+#ifdef POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_ENABLE
+static int16_t  momentum_vel_h    = 0;     /* Q8 fixed-point velocity */
+static int16_t  momentum_vel_v    = 0;
+static bool     momentum_active   = false;
+static bool     was_scrolling     = false;
+static uint16_t momentum_timer    = 0;
+static int16_t  momentum_accum_h  = 0;     /* Sub-unit accumulator */
+static int16_t  momentum_accum_v  = 0;
+#endif
+
+/* ── Tap-to-drag state machine (runtime configurable) ────────────── */
 #if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
 #    include "pointing_device.h"
 
 static bool     tap_drag_armed       = false;
 static bool     tap_drag_active      = false;
+static bool     drag_lock_active     = false;
 static uint16_t tap_drag_timer       = 0;
 static uint8_t  gesture_finger_count = 0;
+static uint8_t  tap_finger_count     = 0;
+/* Runtime window: 0 = disabled, >0 = ms, -1 = drag lock */
+static int16_t  tap_drag_window      = POINTING_DEVICE_GESTURES_TAP_DRAG_WINDOW_MS;
 
-void pointing_device_gesture_notify_tap(void) {
+void pointing_device_gestures_set_tap_drag(int16_t window_ms) {
+    tap_drag_window = window_ms;
+    /* Reset state when changing modes */
+    tap_drag_armed  = false;
+    tap_drag_active = false;
+    drag_lock_active = false;
+}
+
+int16_t pointing_device_gestures_get_tap_drag(void) {
+    return tap_drag_window;
+}
+
+void pointing_device_gesture_notify_tap(uint8_t finger_count) {
+    tap_finger_count = finger_count;
+    if (tap_drag_window == 0) return; /* Disabled */
+
+    if (drag_lock_active) {
+        /* Second tap releases drag lock */
+        drag_lock_active = false;
+        tap_drag_armed   = false;
+        tap_drag_active  = false;
+        return;
+    }
+
     tap_drag_armed  = true;
     tap_drag_active = false;
     tap_drag_timer  = timer_read();
@@ -165,7 +203,12 @@ void pointing_device_gesture_notify_fingers(uint8_t count) {
 }
 
 static report_mouse_t apply_tap_drag(report_mouse_t mouse_report) {
-    if (tap_drag_active) {
+    if (tap_drag_window == 0) return mouse_report; /* Disabled */
+
+    if (drag_lock_active) {
+        /* Drag lock: hold BUTTON1 until second tap */
+        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
+    } else if (tap_drag_active) {
         if (gesture_finger_count >= 1) {
             mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
         } else {
@@ -174,14 +217,38 @@ static report_mouse_t apply_tap_drag(report_mouse_t mouse_report) {
     } else if (tap_drag_armed) {
         /* Keep BUTTON1 held during the window so there's no gap. */
         mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
-        if (timer_elapsed(tap_drag_timer) >= POINTING_DEVICE_GESTURES_TAP_DRAG_WINDOW_MS) {
-            tap_drag_armed = false;
-            /* Release — finger didn't come back in time. */
-        } else if (gesture_finger_count == 1) {
-            tap_drag_active = true;
-            tap_drag_armed  = false;
+
+        if (tap_drag_window == -1) {
+            /* Drag lock mode: once finger returns, lock drag on */
+            if (gesture_finger_count == 1) {
+                drag_lock_active = true;
+                tap_drag_armed   = false;
+            }
+        } else {
+            /* Timed window mode */
+            if (timer_elapsed(tap_drag_timer) >= (uint16_t)tap_drag_window) {
+                tap_drag_armed = false;
+                /* Release — finger didn't come back in time. */
+            } else if (gesture_finger_count == 1) {
+                tap_drag_active = true;
+                tap_drag_armed  = false;
+            }
         }
     }
+
+    /* Three-finger tap: remap button */
+#ifdef POINTING_DEVICE_GESTURES_THREE_FINGER_TAP_BUTTON
+    if (tap_finger_count >= 3) {
+        /* Remove BUTTON1 that was set by the driver for the tap,
+         * replace with the configured three-finger button */
+        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON1);
+        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_GESTURES_THREE_FINGER_TAP_BUTTON);
+        tap_finger_count = 0; /* Consume the event */
+        /* Cancel any tap-drag arming from this tap */
+        tap_drag_armed = false;
+    }
+#endif
+
     return mouse_report;
 }
 #endif
@@ -201,6 +268,48 @@ report_mouse_t pointing_device_gestures_process(report_mouse_t mouse_report) {
     } else {
         scroll_remainder_h = 0;
         scroll_remainder_v = 0;
+    }
+#endif
+
+    /* Scroll momentum */
+#ifdef POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_ENABLE
+    bool is_scrolling = (mouse_report.h != 0 || mouse_report.v != 0);
+
+    if (is_scrolling) {
+        /* Capture velocity while actively scrolling (Q8 fixed point) */
+        momentum_vel_h = (int16_t)mouse_report.h * 256;
+        momentum_vel_v = (int16_t)mouse_report.v * 256;
+        momentum_active = false;
+        momentum_accum_h = 0;
+        momentum_accum_v = 0;
+        was_scrolling = true;
+    } else if (was_scrolling && !momentum_active) {
+        /* Just stopped scrolling — start momentum */
+        momentum_active = true;
+        momentum_timer  = timer_read();
+        was_scrolling   = false;
+    }
+
+    if (momentum_active) {
+        if (timer_elapsed(momentum_timer) >= POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_INTERVAL_MS) {
+            momentum_timer = timer_read();
+            /* Decay velocity */
+            momentum_vel_h = (int16_t)((int32_t)momentum_vel_h * POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_DECAY / 20);
+            momentum_vel_v = (int16_t)((int32_t)momentum_vel_v * POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_DECAY / 20);
+
+            /* Convert Q8 velocity to scroll units with accumulator */
+            momentum_accum_h += momentum_vel_h;
+            momentum_accum_v += momentum_vel_v;
+            mouse_report.h = (mouse_hv_report_t)(momentum_accum_h / 256);
+            mouse_report.v = (mouse_hv_report_t)(momentum_accum_v / 256);
+            momentum_accum_h -= (int16_t)mouse_report.h * 256;
+            momentum_accum_v -= (int16_t)mouse_report.v * 256;
+
+            /* Stop when velocity is negligible */
+            if (momentum_vel_h == 0 && momentum_vel_v == 0) {
+                momentum_active = false;
+            }
+        }
     }
 #endif
 

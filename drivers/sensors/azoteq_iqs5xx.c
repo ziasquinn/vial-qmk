@@ -378,7 +378,7 @@ report_mouse_t azoteq_iqs5xx_get_report(report_mouse_t mouse_report) {
             ) {
                 pd_dprintf("IQS5XX - Single tap/hold.\n");
 #if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
-                pointing_device_gesture_notify_tap();
+                pointing_device_gesture_notify_tap(base_data.number_of_fingers);
 #endif
                 temp_report.buttons = pointing_device_handle_buttons(temp_report.buttons, true, POINTING_DEVICE_BUTTON1);
             } else if (base_data.gesture_events_1.two_finger_tap) {

@@ -67,7 +67,7 @@ void cursor_glide_update(cursor_glide_context_t* glide, mouse_xy_report_t dx, mo
 #    define POINTING_DEVICE_GESTURES_NATURAL_SCROLL_ENABLE false
 #endif
 
-/* ── Tap-to-drag ─────────────────────────────────────────────────── */
+/* ── Tap-to-drag (runtime configurable) ──────────────────────────── */
 #ifndef POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
 #    define POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE false
 #endif
@@ -77,25 +77,45 @@ void cursor_glide_update(cursor_glide_context_t* glide, mouse_xy_report_t dx, mo
 
 #if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
 /**
- * Drivers call this when hardware detects a single-tap gesture.
- * The gestures module then manages the tap-to-drag state machine.
+ * Set tap-drag window at runtime.
+ *   0  = tap-drag disabled
+ *  >0  = window in milliseconds
+ *  -1  = drag lock (hold until second tap)
  */
-void pointing_device_gesture_notify_tap(void);
+void pointing_device_gestures_set_tap_drag(int16_t window_ms);
+int16_t pointing_device_gestures_get_tap_drag(void);
 
 /**
- * Drivers call this to report the current finger count so the
- * tap-to-drag state machine can detect finger-down for drag.
+ * Drivers call this when hardware detects a tap gesture,
+ * passing the number of fingers involved.
+ */
+void pointing_device_gesture_notify_tap(uint8_t finger_count);
+
+/**
+ * Drivers call this each cycle to report current finger count.
  */
 void pointing_device_gesture_notify_fingers(uint8_t count);
 #endif
 
-/* Define a flag so pointing_device.c knows to call us */
-#if POINTING_DEVICE_GESTURES_SCROLL_DIVISOR > 1 || POINTING_DEVICE_GESTURES_NATURAL_SCROLL_ENABLE || POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+/* ── Three-finger tap button mapping ─────────────────────────────── */
+/* Define to a POINTING_DEVICE_BUTTONx to enable, e.g. POINTING_DEVICE_BUTTON3 for middle click */
+/* #define POINTING_DEVICE_GESTURES_THREE_FINGER_TAP_BUTTON POINTING_DEVICE_BUTTON3 */
+
+/* ── Scroll momentum (kinetic scrolling) ─────────────────────────── */
+#ifndef POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_DECAY
+#    define POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_DECAY 19 /* out of 20, ~0.95 */
+#endif
+#ifndef POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_INTERVAL_MS
+#    define POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_INTERVAL_MS 16 /* ~60fps */
+#endif
+
+/* ── Enable flag ─────────────────────────────────────────────────── */
+#if POINTING_DEVICE_GESTURES_SCROLL_DIVISOR > 1 || POINTING_DEVICE_GESTURES_NATURAL_SCROLL_ENABLE || POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE || defined(POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_ENABLE) || defined(POINTING_DEVICE_GESTURES_THREE_FINGER_TAP_BUTTON)
 #    define POINTING_DEVICE_GESTURES_ENABLE
 #endif
 
 /**
- * Process gestures on the mouse report (scroll divisor, natural scroll, tap-to-drag).
+ * Process gestures on the mouse report.
  * Called from the pointing device pipeline.
  */
 report_mouse_t pointing_device_gestures_process(report_mouse_t mouse_report);

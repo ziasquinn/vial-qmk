@@ -2,10 +2,13 @@
 #include "eeconfig.h"
 #include "version.h"
 #include "split_common/transactions.h"
+#include "pointing_device_gestures.h"
 #include QMK_KEYBOARD_H
 
 saved_values_t global_saved_values;
 const int16_t mh_timer_choices[6] = { 200, 300, 400, 500, 800, -1 }; // -1 is infinite.
+const int16_t tap_drag_choices[] = { 0, 200, 300, 400, 500, 600, -1 }; // 0 = off, -1 = drag lock.
+#define TAP_DRAG_CHOICES_LENGTH (sizeof(tap_drag_choices)/sizeof(tap_drag_choices[0]))
 
 uint8_t sval_active_layer = 0;
 #ifdef VIAL_ENABLE
@@ -67,6 +70,11 @@ void read_eeprom_kb(void) {
         global_saved_values.version = 6;
         global_saved_values.turbo_scan = 0;
     }
+    if (global_saved_values.version < 7) {
+        global_saved_values.version = 7;
+        global_saved_values.tap_drag_index = 1; // Default: 200ms
+        modified = true;
+    }
 
     // As we add versions, just append here.
     if (modified) {
@@ -105,6 +113,28 @@ void output_keyboard_info(void) {
 	    yes_or_no(global_saved_values.auto_mouse),
 	    mh_timer_choices[global_saved_values.mh_timer_index],
 	    global_saved_values.turbo_scan);
+    send_string(output_buffer);
+    int16_t td = tap_drag_choices[global_saved_values.tap_drag_index];
+    const char *td_str;
+    char td_buf[16];
+    if (td == 0) {
+        td_str = "off";
+    } else if (td == -1) {
+        td_str = "drag lock";
+    } else {
+        sprintf(td_buf, "%dms", td);
+        td_str = td_buf;
+    }
+    sprintf(output_buffer, "Tap-Drag: %s, Scroll Div: %d, Natural Scroll: %s, Scroll Momentum: %s\n",
+	    td_str,
+	    POINTING_DEVICE_GESTURES_SCROLL_DIVISOR,
+	    yes_or_no(POINTING_DEVICE_GESTURES_NATURAL_SCROLL_ENABLE),
+#ifdef POINTING_DEVICE_GESTURES_SCROLL_MOMENTUM_ENABLE
+	    "yes"
+#else
+	    "no"
+#endif
+	    );
     send_string(output_buffer);
 }
 
@@ -176,6 +206,28 @@ void set_dpi_from_eeprom(void) {
     set_right_dpi(global_saved_values.right_dpi_index);
 }
 
+void cycle_tap_drag(void) {
+    if (global_saved_values.tap_drag_index + 1 < TAP_DRAG_CHOICES_LENGTH) {
+        global_saved_values.tap_drag_index++;
+    } else {
+        global_saved_values.tap_drag_index = 0;
+    }
+    int16_t val = tap_drag_choices[global_saved_values.tap_drag_index];
+    uprintf("Tap-Drag: %d\n", val);
+#if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+    pointing_device_gestures_set_tap_drag(val);
+#endif
+    write_eeprom_kb();
+}
+
+void set_tap_drag_from_eeprom(void) {
+#if POINTING_DEVICE_GESTURES_TAP_DRAG_ENABLE
+    if (global_saved_values.tap_drag_index < TAP_DRAG_CHOICES_LENGTH) {
+        pointing_device_gestures_set_tap_drag(tap_drag_choices[global_saved_values.tap_drag_index]);
+    }
+#endif
+}
+
 void sval_set_active_layer(uint32_t layer, bool save) {
     if (layer > 15) layer = 15;
     sval_active_layer = layer;
@@ -202,6 +254,7 @@ void via_init_kb(void) {
 void keyboard_post_init_kb(void) {
     read_eeprom_kb();
     set_dpi_from_eeprom();
+    set_tap_drag_from_eeprom();
     keyboard_post_init_user();
     transaction_register_rpc(KEYBOARD_SYNC_A, kb_sync_listener);
     if (is_keyboard_master()) {
